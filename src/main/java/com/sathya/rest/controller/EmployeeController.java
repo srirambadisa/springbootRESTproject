@@ -2,6 +2,7 @@ package com.sathya.rest.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -206,7 +208,7 @@ public class EmployeeController
 		
 	}
 	
-	@PutMapping("/updateemp/{id}")
+	@PutMapping("/putupdateemp/{id}")
 	public ResponseEntity<?> updateEmployee(@PathVariable("id") long id, @RequestBody Employee newEmployee)
 	{
 		Employee employee=employeeService.updateEmployee(id,newEmployee);
@@ -230,7 +232,7 @@ public class EmployeeController
 	}
 		
 		
-		@PutMapping("/updateemp")
+		@PutMapping("/putupdateemp")
 		public ResponseEntity<?> updateEmployee(@RequestParam("email") String email, @RequestBody Employee newEmployee)
 		{
 			Employee employee=employeeService.updateEmployee(email,newEmployee);
@@ -254,8 +256,38 @@ public class EmployeeController
 	}
 
 
-
-
-
+		
+		
+	@PatchMapping("/partialupdate/{id}")
+	public ResponseEntity<?> patchUpdateEmp(@PathVariable("id") long id,@RequestBody Map<String, Object> updates)
+	{
+		Optional<Employee> optionalEmployee=employeeService.partialUpdateEmp(id,updates);
+		if(optionalEmployee.isPresent())
+		{
+			Employee employee=optionalEmployee.get();
+			return ResponseEntity.status(HttpStatus.OK)
+								 .header("info", "employee updated")
+								 .body(employee);
+		}
+		else
+		{
+			ErrorResponse errorResponse=new ErrorResponse();
+			errorResponse.setTimeStamp(LocalDateTime.now());
+			errorResponse.setStatusCode(HttpStatus.NOT_FOUND.value());
+			errorResponse.setErrorMessage("no employees found");
+			
+			return ResponseEntity.status(HttpStatus.NO_CONTENT)
+								 .header("info", "no employee found")
+								 .body(errorResponse);		
+		}
+	}
+	
+	@GetMapping("/getnames")
+	public ResponseEntity<List<String>> getNames()
+	{
+		return ResponseEntity.status(HttpStatus.OK)
+							 .header("info", "Data retrived")
+							 .body(List.of("Ram","sandy","adarsh","simhadri","nikil"));
+	}
 
 }

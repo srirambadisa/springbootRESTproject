@@ -1,6 +1,7 @@
 package com.sathya.rest.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -157,6 +158,46 @@ public class EmployeeService
 		{
 			return false;
 		}
+	}
+
+	public Optional<Employee> partialUpdateEmp(long id, Map<String, Object> updates) 
+	{
+		Optional<Employee> optionalEmployee=employeeRepository.findById(id);
+		if(optionalEmployee.isPresent())
+		{
+			Employee existingEmp=optionalEmployee.get();
+			updates.forEach((key,value) -> 
+			{
+				switch (key) 
+				{
+				case "name": 
+					existingEmp.setName((String)value);
+					break;
+				case "salary": 
+					existingEmp.setSalary((double)value);
+					break;
+				case "department": 
+					existingEmp.setDepartment((String)value);
+					break;
+				case "gender": 
+					existingEmp.setGender((String)value);
+					break;
+				case "email":
+		            existingEmp.setEmail((String) value);
+		            break;
+				
+				default:
+					throw new IllegalArgumentException("Unexpected value: " + key);
+				}
+			});
+			Employee employee=employeeRepository.save(existingEmp);
+			return Optional.of(employee);	
+		}
+		else
+		{
+			return Optional.empty();
+		}
+		
 	}
 
 }
