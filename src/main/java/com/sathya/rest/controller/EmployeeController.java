@@ -1,14 +1,18 @@
 package com.sathya.rest.controller;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -24,6 +28,7 @@ import com.sathya.rest.errorResponse.ErrorResponse;
 import com.sathya.rest.service.EmployeeService;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class EmployeeController 
 {
 	@Autowired
@@ -45,6 +50,32 @@ public class EmployeeController
 				.body(emps);
 	}
 
+	
+	@GetMapping("/getempbyid/{id}")
+	public ResponseEntity<?> getEmployeeById(@PathVariable("id") long id)
+	{
+		Optional<Employee> optional=employeeService.getEmpById(id);
+		if(optional.isPresent())
+		{
+			Employee emp=optional.get();
+			return ResponseEntity.status(HttpStatus.OK)
+					.header("info", "Data retrived successfully...")
+					.body(emp);
+		}
+		else
+		{
+			ErrorResponse errorResponse=new ErrorResponse();
+			errorResponse.setTimeStamp(LocalDateTime.now());
+			errorResponse.setStatusCode(HttpStatus.NOT_FOUND.value());
+			errorResponse.setErrorMessage("no employee found with "+id);
+
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.header("info", "no employee")
+					.body(errorResponse);
+		}
+	}
+	
+	
 	@GetMapping("/getempbyemail/{email}")
 	public ResponseEntity<?> getEmpByEmail(@PathVariable("email") String email)
 	{
@@ -137,7 +168,7 @@ public class EmployeeController
 	}
 
 	@DeleteMapping("/delempbyid/{id}")
-	public ResponseEntity delEmpById(@PathVariable("id") long id)
+	public ResponseEntity deleteEmployeeById(@PathVariable("id") long id)
 	{
 		boolean status=employeeService.deleteById(id);
 		if(status)
@@ -232,7 +263,7 @@ public class EmployeeController
 	}
 		
 		
-		@PutMapping("/putupdateemp")
+		@PutMapping("/putupdateempbyemail")
 		public ResponseEntity<?> updateEmployee(@RequestParam("email") String email, @RequestBody Employee newEmployee)
 		{
 			Employee employee=employeeService.updateEmployee(email,newEmployee);
@@ -259,7 +290,7 @@ public class EmployeeController
 		
 		
 	@PatchMapping("/partialupdate/{id}")
-	public ResponseEntity<?> patchUpdateEmp(@PathVariable("id") long id,@RequestBody Map<String, Object> updates)
+	public ResponseEntity<?> partialUpdateEmployee(@PathVariable("id") long id,@RequestBody Map<String, Object> updates)
 	{
 		Optional<Employee> optionalEmployee=employeeService.partialUpdateEmp(id,updates);
 		if(optionalEmployee.isPresent())
@@ -288,6 +319,33 @@ public class EmployeeController
 		return ResponseEntity.status(HttpStatus.OK)
 							 .header("info", "Data retrived")
 							 .body(List.of("Ram","sandy","adarsh","simhadri","nikil"));
+		
+	}
+	
+	@PostMapping("/saveEmployee1")
+	public ResponseEntity<EntityModel<Employee>> saveEmployeeData1(@RequestBody Employee employee) {
+	    
+	    Employee emp = employeeService.saveEmployeeData(employee);
+
+	    // Create the EntityModel with employee data.
+	    EntityModel<Employee> entityModel = EntityModel.of(emp);
+
+	    // Add the links to EntityModel.
+	    entityModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EmployeeController.class).getEmployeeById(emp.getId()))
+	        .withSelfRel());
+
+	    entityModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EmployeeController.class).deleteEmployeeById(emp.getId()))
+	        .withRel("Delete")); 
+
+	    entityModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EmployeeController.class).updateEmployee(emp.getId(), emp))
+	        .withRel("put"));
+
+	    entityModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EmployeeController.class).partialUpdateEmployee(emp.getId(), new HashMap<>()))
+	        .withRel("patch"));
+
+	    return ResponseEntity.status(HttpStatus.CREATED)
+	        .header("info", "Data saved successfully...")
+	        .body(entityModel);
 	}
 
 }

@@ -28,6 +28,12 @@ public class EmployeeService
 		List<Employee> emps=employeeRepository.saveAll(employees);
 		return emps;
 	}
+	
+	public Optional<Employee> getEmpById(long id) 
+	{
+		return employeeRepository.findById(id);
+	}
+
 
 	public Optional<Employee> getEmpByEmail(String email) 
 	{
@@ -200,4 +206,5 @@ public class EmployeeService
 		
 	}
 
+	
 }
